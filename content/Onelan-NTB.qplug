@@ -1,0 +1,524 @@
+-- The PluginInfo header contains some important information that Q-Sys Designer will parse when compiled.
+-- Id is a unique ID given to every plugin. While we typically use randomly generated UUID's, you can use anything here so long as it is unique
+
+PluginInfo = {
+	Name = "Onelan~NTB (0.0.0.0-master)", -- The tilde here indicates folder structure in the Shematic Elements pane
+	Version = "0.0.0.0-master",
+	Id = "qsysc-onelan-ntb.0.0.0.0-master", -- show this is just a unique id. Show some commented out 'fun' unique ids
+	Description = "Plugin for control of a Onelan Digital Signage Player (NTB)",
+	ShowDebug = true
+}
+
+-- Once you've drawn your plugin in Designer, you can determine what colors you use a lot. Save yourself some time by putting them in a table, and then simply calling them later.
+local Colors = {
+	White = {255, 255, 255},
+	Black = {0, 0, 0},
+	Red = {255, 0, 0},
+	Green = {0, 255, 0}
+}
+
+local MaxSchedules = 10
+-- We can let users determine some of the plugin properties by exposing them here
+-- While this function can be very useful, it is completely optional and not always needed.
+-- If no Properties are set here, only the position and fill properties of your plugin will show in the Properties pane
+function GetProperties()
+	props = {
+		{
+			Name = "IP Host",
+			Type = "string",
+			Value = "127.0.0.1"
+		}
+	}
+	return props
+end
+
+-- The below function is optional (like GetProperties() is), but it can allow further customization of what users can and can't do with your plugin.
+-- In this example, when Model 1 is selected in the properties pane, the ability to modify some of the properties will be hidden, only allowing customization with Model 2
+-- Another application of this is if you have different input/output types for different models, and want those properties to be dynamic in the Properties pane
+function RectifyProperties(props)
+	return props
+end
+
+-- The below function is where you will populate the controls for your plugin.
+-- If you've written some of the Runtime code already, simply use the control names you populated in Text Controller/Control Script, and use their Properties to inform the values here
+-- ControlType can be Button, Knob, Indicator or Text
+-- ButtonType ( ControlType == Button ) can be Momentary, Toggle or Trigger
+-- IndicatorType ( ControlType == Indicator ) can be Led, Meter, Text or Status
+-- ControlUnit ( ControlType == Knob ) can be Hz, Float, Integer, Pan, Percent, Position or Seconds
+function GetControls(props)
+	ctls = {
+		-- System Pins
+		{
+			Name = "Online",
+			ControlType = "Indicator",
+			IndicatorType = "Led",
+			PinStyle = "Output",
+			Count = 1,
+			UserPin = true
+		},
+		{
+			Name = "ConnectionState",
+			ControlType = "Indicator",
+			IndicatorType = "Text"
+			--PinStyle = "Both",
+			--Count = 1,
+			--UserPin = true
+		},
+		{
+			Name = "FirmwareVersion",
+			ControlType = "Indicator",
+			IndicatorType = "Text"
+			--PinStyle = "Output",
+			--Count = 1,
+			--UserPin = true
+		},
+		-- Remote Control Buttons
+		{
+			Name = "OverrideName",
+			ControlType = "Indicator",
+			IndicatorType = "Text",
+			Count = MaxSchedules,
+			UserPin = true,
+			PinStyle = "Output"
+		},
+		{
+			Name = "OverrideCancel",
+			ControlType = "Button",
+			ButtonType = "Momentary",
+			Count = 1,
+			UserPin = true,
+			PinStyle = "Input"
+		},
+		{
+			Name = "OverrideActivate",
+			ControlType = "Button",
+			ButtonType = "Momentary",
+			Count = MaxSchedules,
+			UserPin = true,
+			PinStyle = "Input"
+		},
+		{
+			Name = "OverrideActive",
+			ControlType = "Indicator",
+			IndicatorType = "Led",
+			Count = MaxSchedules,
+			UserPin = true,
+			PinStyle = "Output"
+		},
+		-- Set Channel Direct
+		{
+			Name = "ActiveSchedule",
+			ControlType = "Indicator",
+			IndicatorType = "Text",
+			UserPin = true,
+			PinStyle = "Output"
+		}
+	}
+	return ctls
+end
+
+function GetPages(props) -- This function allows you to populate pages in your plugin.
+	pages = {}
+	table.insert(pages, {name = "NTB"})
+	return pages
+end
+
+function GetControlLayout(props)
+	local ActiveRemote = props["page_index"].Value
+	local layout = {}
+	local graphics = {}
+
+	-- Status
+	layout["Online"] = {
+		PrettyName = "System~Online",
+		Style = "Indicator",
+		Color = {0, 255, 0},
+		OffColor = {255, 0, 0},
+		UnlinkOffColor = true,
+		Position = {3, 20},
+		Size = {25, 25}
+	}
+	layout["ConnectionState"] = {
+		--PrettyName = "System~IP Host",
+		Style = "Text",
+		Position = {54, 12},
+		Size = {200, 25}
+	}
+	layout["FirmwareVersion"] = {
+		--PrettyName = "System~Firmware Version",
+		Style = "Text",
+		Position = {275, 12},
+		Size = {125, 25}
+	}
+	table.insert(
+		graphics,
+		{
+			Type = "GroupBox", -- This is the overall groupbox that will give the plugin a more 'contained' look
+			Text = "Status",
+			HTextAlign = "Left",
+			Fill = Colors.White,
+			CornerRadius = 8,
+			StrokeColor = Colors.Black,
+			StrokeWidth = 1,
+			Position = {0, 0},
+			Size = {415, 48} -- The width of the main GroupBox is dependent on how many channels the user specified. More channels means a wider group box
+		}
+	)
+
+	-- Schedule Select
+	layout["ActiveSchedule"] = {
+		PrettyName = "Schedule~Current",
+		Style = "Text",
+		Position = {50, 60},
+		Size = {125, 25}
+	}
+
+	layout["OverrideCancel"] = {
+		PrettyName = "Override~Cancel",
+		Style = "Button",
+		ButtonStyle = "Momentary",
+		Position = {200, 80},
+		Size = {40, 25}
+	}
+
+	for s = 1, MaxSchedules do
+		-- Schedule Select
+		layout["OverrideActive " .. s] = {
+			PrettyName = "Override~Active " .. s,
+			Style = "Indicator",
+			Color = {0, 255, 0},
+			OffColor = {0, 0, 0},
+			UnlinkOffColor = true,
+			Position = {15, 80 + (s * 25)},
+			Size = {25, 25}
+		}
+		layout["OverrideName " .. s] = {
+			PrettyName = "Override~Name " .. s,
+			Style = "Text",
+			Position = {65, 80 + (s * 25)},
+			Size = {100, 25}
+		}
+		layout["OverrideActivate " .. s] = {
+			PrettyName = "Override~Activate " .. s,
+			Style = "Button",
+			ButtonStyle = "Momentary",
+			Position = {200, 80 + (s * 25)},
+			Size = {40, 25}
+		}
+	end
+
+	return layout, graphics
+end
+
+-- Components provide a way to save or retain certain settings without necessarily displaying it in another control such as a combobox.
+-- For example, the when someone hits the "Save" button on this plugin, it saves the RGB values in the "rgb_storage" component below.
+-- This allows us to do things 'under the hood' which gives the plugin a much sleeker feel.
+function GetComponents(props)
+	return {}
+end
+
+if Controls then
+	---------------------------------------------------------------------------------
+	-- Imported XML Code - Start
+	---------------------------------------------------------------------------------
+	function newParser()
+		XmlParser = {}
+
+		function XmlParser:ToXmlString(value)
+			value = string.gsub(value, "&", "&amp;") -- '&' -> "&amp;"
+			value = string.gsub(value, "<", "&lt;") -- '<' -> "&lt;"
+			value = string.gsub(value, ">", "&gt;") -- '>' -> "&gt;"
+			value = string.gsub(value, '"', "&quot;") -- '"' -> "&quot;"
+			value =
+				string.gsub(
+				value,
+				"([^%w%&%;%p%\t% ])",
+				function(c)
+					return string.format("&#x%X;", string.byte(c))
+				end
+			)
+			return value
+		end
+
+		function XmlParser:FromXmlString(value)
+			value =
+				string.gsub(
+				value,
+				"&#x([%x]+)%;",
+				function(h)
+					return string.char(tonumber(h, 16))
+				end
+			)
+			value =
+				string.gsub(
+				value,
+				"&#([0-9]+)%;",
+				function(h)
+					return string.char(tonumber(h, 10))
+				end
+			)
+			value = string.gsub(value, "&quot;", '"')
+			value = string.gsub(value, "&apos;", "'")
+			value = string.gsub(value, "&gt;", ">")
+			value = string.gsub(value, "&lt;", "<")
+			value = string.gsub(value, "&amp;", "&")
+			return value
+		end
+
+		function XmlParser:ParseArgs(node, s)
+			string.gsub(
+				s,
+				'(%w+)=(["\'])(.-)%2',
+				function(w, _, a)
+					node:addProperty(w, self:FromXmlString(a))
+				end
+			)
+		end
+
+		function XmlParser:ParseXmlText(xmlText)
+			local stack = {}
+			local top = newNode()
+			table.insert(stack, top)
+			local ni, c, label, xarg, empty
+			local i, j = 1, 1
+			while true do
+				ni, j, c, label, xarg, empty = string.find(xmlText, "<(%/?)([%w_:]+)(.-)(%/?)>", i)
+				if not ni then
+					break
+				end
+				local text = string.sub(xmlText, i, ni - 1)
+				if not string.find(text, "^%s*$") then
+					local lVal = (top:value() or "") .. self:FromXmlString(text)
+					stack[#stack]:setValue(lVal)
+				end
+				if empty == "/" then -- empty element tag
+					local lNode = newNode(label)
+					self:ParseArgs(lNode, xarg)
+					top:addChild(lNode)
+				elseif c == "" then -- start tag
+					local lNode = newNode(label)
+					self:ParseArgs(lNode, xarg)
+					table.insert(stack, lNode)
+					top = lNode
+				else -- end tag
+					local toclose = table.remove(stack) -- remove top
+
+					top = stack[#stack]
+					if #stack < 1 then
+						error("XmlParser: nothing to close with " .. label)
+					end
+					if toclose:name() ~= label then
+						error("XmlParser: trying to close " .. toclose.name .. " with " .. label)
+					end
+					top:addChild(toclose)
+				end
+				i = j + 1
+			end
+			local text = string.sub(xmlText, i)
+			if #stack > 1 then
+				error("XmlParser: unclosed " .. stack[#stack]:name())
+			end
+			return top
+		end
+
+		function XmlParser:loadFile(xmlFilename, base)
+			if not base then
+				base = system.ResourceDirectory
+			end
+
+			local path = system.pathForFile(xmlFilename, base)
+			local hFile, err = io.open(path, "r")
+
+			if hFile and not err then
+				local xmlText = hFile:read("*a") -- read file content
+				io.close(hFile)
+				return self:ParseXmlText(xmlText), nil
+			else
+				print(err)
+				return nil
+			end
+		end
+
+		return XmlParser
+	end
+
+	function newNode(name)
+		local node = {}
+		node.___value = nil
+		node.___name = name
+		node.___children = {}
+		node.___props = {}
+
+		function node:value()
+			return self.___value
+		end
+		function node:setValue(val)
+			self.___value = val
+		end
+		function node:name()
+			return self.___name
+		end
+		function node:setName(name)
+			self.___name = name
+		end
+		function node:children()
+			return self.___children
+		end
+		function node:numChildren()
+			return #self.___children
+		end
+		function node:addChild(child)
+			if self[child:name()] ~= nil then
+				if type(self[child:name()].name) == "function" then
+					local tempTable = {}
+					table.insert(tempTable, self[child:name()])
+					self[child:name()] = tempTable
+				end
+				table.insert(self[child:name()], child)
+			else
+				self[child:name()] = child
+			end
+			table.insert(self.___children, child)
+		end
+
+		function node:properties()
+			return self.___props
+		end
+		function node:numProperties()
+			return #self.___props
+		end
+		function node:addProperty(name, value)
+			local lName = "@" .. name
+			if self[lName] ~= nil then
+				if type(self[lName]) == "string" then
+					local tempTable = {}
+					table.insert(tempTable, self[lName])
+					self[lName] = tempTable
+				end
+				table.insert(self[lName], value)
+			else
+				self[lName] = value
+			end
+			table.insert(self.___props, {name = name, value = self[name]})
+		end
+
+		return node
+	end
+	---------------------------------------------------------------------------------
+	-- Imported XML Code - End
+	---------------------------------------------------------------------------------
+
+	local OverrideHREFs = {}
+
+	function handleGetSchedules(tbl, code, data, err, headers)
+		if code == 200 then
+			-- Reset the Comms Timer
+			timerComms:Start(30)
+			Controls.Online.Boolean = true
+			-- Parse in the body of the request if successful
+			local xml = newParser()
+			local parsedXML = xml:ParseXmlText(data)
+
+			-- Get the Current Schedule Name
+			Controls["ActiveSchedule"].String = parsedXML.status.schedule_status.schedule["@name6"]
+
+			-- Get the Default Schedule
+			-- player.ScheduleDefault = parsedXML.status.schedule_config["@href"]
+
+			-- Get the Overrides
+			for o, v in pairs(parsedXML.status.schedule_config:children()) do
+				Controls["OverrideName"][o].String = v["@name"]
+				OverrideHREFs[o] = v["@href"]
+			end
+			for o = #parsedXML.status.schedule_config:children() + 1, MaxSchedules do
+				Controls["OverrideName"][o].String = ""
+				OverrideHREFs[o] = ""
+			end
+
+			-- Populate the relevant fields
+			for o = 1, MaxSchedules do
+				Controls["OverrideActive"][o].Boolean = Controls["OverrideName"][o].String == Controls["ActiveSchedule"].String
+			end
+		end
+	end
+
+	function handlePutOverride(tbl, code, data, err, headers)
+		if code == 200 then
+			getSchedules()
+		end
+	end
+
+	function getSchedules()
+		HttpClient.Download {
+			Url = "http://" .. Properties["IP Host"].Value .. "/status/schedule.xml",
+			Headers = {["Content-Type"] = "text/xml"},
+			User = "remote",
+			Password = "RedBull1987",
+			Timeout = 10,
+			EventHandler = handleGetSchedules
+		}
+	end
+
+	function setOverride(o)
+		-- Build the Body
+		data = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><activate_schedule href="'
+		if o == 0 then
+			data = data .. "file:control/channel/active/schedule.xml"
+		elseif OverrideHREFs[o] ~=  "" then
+			data = data .. OverrideHREFs[o]
+		else
+			return
+		end
+		data = data .. '" />'
+		-- Wrap the URL in the XML
+
+		HttpClient.Upload {
+			Url = "http://" .. Properties["IP Host"].Value .. "/XML",
+			Headers = {["Content-Type"] = "text/xml"},
+			User = "remote",
+			Password = "RedBull1987",
+			Timeout = 10,
+			Method = "POST",
+			Data = data,
+			EventHandler = handlePutOverride
+		}
+	end
+
+	-- Loop through all Contgrols and setup Event Handlers
+	for k, v in pairs(Controls) do
+		-- Setup anything with "Source..."
+		if k == "OverrideActivate" then -- Setup for individual source selection
+			-- Get Output Number
+			for s = 1, MaxSchedules do
+				v[s].EventHandler = function(changedControl)
+					if changedControl.Boolean == true then
+						setOverride(s)
+					end
+				end
+			end
+		elseif k == "OverrideCancel" then
+			v.EventHandler = function(changedControl)
+				if changedControl.Boolean == true then
+					setOverride(0)
+				end
+			end
+		end
+	end
+
+    -- Create and setup the Communications Timeout
+    timerComms = Timer.New()
+    timerComms.EventHandler = function(timer)
+        timer:Stop()
+        Controls.Online.Boolean = false
+	end
+	
+	-- Create and setup Polling
+	timerPoll = Timer.New()
+
+	timerPoll.EventHandler = function(timer)
+		getSchedules()
+	end
+
+	timerPoll:Start(15)
+	getSchedules()
+end
