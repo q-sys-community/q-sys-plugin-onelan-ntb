@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
-<!-- Initially generated manually using `nuget spec`-->
 <package >
   <metadata>
     <id>Onelan-NTB</id>
     <version>0.0.0.0-master</version>
     <title>Onelan NTB</title>
-    <authors>Sam Shelton</authors>
-    <owners>Solo Works London</owners>
+    <authors>Solo Works London</authors>
+    <owners>Q-Sys Community</owners>
     <license type="expression">GPL-3.0-or-later</license>
     <projectUrl>https://github.com/q-sys-community/q-sys-plugin-onelan-ntb</projectUrl>
     <iconUrl>http://content/images/onelan-logo-128px.png</iconUrl>
