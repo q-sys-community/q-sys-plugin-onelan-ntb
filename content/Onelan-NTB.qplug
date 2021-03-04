@@ -136,8 +136,8 @@ function GetControlLayout(props)
 	local title_size = {224,32}
     local btn_size = {32,24}
     local status_groupbox_size = {title_size[1], 4*btn_size[2]}
-    local matrix_groupbox_position = {0, title_size[2] + status_groupbox_size[2] + (0.5 * btn_size[2])}
-    local matrix_groupbox_size = {title_size[1], (6*btn_size[2]) + (MaxSchedules * btn_size[2])}
+    local layout_groupbox_position = {0, title_size[2] + status_groupbox_size[2] + (0.5 * btn_size[2])}
+    local layout_groupbox_size = {title_size[1], (6*btn_size[2]) + (MaxSchedules * btn_size[2])}
 
 	graphics = {
         {
@@ -180,7 +180,7 @@ function GetControlLayout(props)
             FontStyle = "Bold",
             HTextAlign = "Right",
             Color = Colors.onelan_grey,
-            Position = {matrix_groupbox_position[1], title_size[2]+(1.5*btn_size[2])},
+            Position = {layout_groupbox_position[1], title_size[2]+(1.5*btn_size[2])},
             Size = {3*btn_size[1], btn_size[2]}
         },
 		{
@@ -191,7 +191,7 @@ function GetControlLayout(props)
             FontStyle = "Bold",
             HTextAlign = "Right",
             Color = Colors.onelan_grey,
-            Position = {matrix_groupbox_position[1], title_size[2]+(2.5*btn_size[2])},
+            Position = {layout_groupbox_position[1], title_size[2]+(2.5*btn_size[2])},
             Size = {3*btn_size[1], btn_size[2]}
         },
 		{
@@ -203,8 +203,8 @@ function GetControlLayout(props)
             StrokeColor = Colors.onelan_grey,
             Color = Colors.onelan_grey,
             StrokeWidth = 1,
-            Position = matrix_groupbox_position,
-            Size = matrix_groupbox_size
+            Position = layout_groupbox_position,
+            Size = layout_groupbox_size
         },
 		{
             Type = "Text",
@@ -214,21 +214,21 @@ function GetControlLayout(props)
             FontStyle = "Bold",
             HTextAlign = "Center",
             Color = Colors.onelan_grey,
-            Position = {btn_size[1], matrix_groupbox_position[2] + (1*btn_size[2])},
+            Position = {btn_size[1], layout_groupbox_position[2] + (1*btn_size[2])},
             Size = {5*btn_size[1], btn_size[2]}
         },
 		{
             Type = "Text",
             Text = "Select",
             FontSize = 10,
-            Position = {matrix_groupbox_position[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+            Position = {layout_groupbox_position[1], (layout_groupbox_position[2] + (4*btn_size[2]))},
             Size = {1.5*btn_size[1],btn_size[2]}
         },
 		{
             Type = "Text",
             Text = "Active",
             FontSize = 10,
-            Position = {matrix_groupbox_position[1]+5.5*btn_size[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+            Position = {layout_groupbox_position[1]+5.5*btn_size[1], (layout_groupbox_position[2] + (4*btn_size[2]))},
             Size = {1.5*btn_size[1],btn_size[2]}
         }
 	}
@@ -260,7 +260,7 @@ function GetControlLayout(props)
 	layout["ActiveSchedule"] = {
 		PrettyName = "Schedule~Current",
 		Style = "Text",
-		Position = {btn_size[1], matrix_groupbox_position[2] + (2*btn_size[2])},
+		Position = {btn_size[1], layout_groupbox_position[2] + (2*btn_size[2])},
             Size = {5*btn_size[1], btn_size[2]}
 	}
 
@@ -270,7 +270,7 @@ function GetControlLayout(props)
 		ButtonStyle = "Momentary",
 		Legend = "Cancel Override",
 		Color = {255,0,0},
-		Position = {matrix_groupbox_position[1]+1.5*btn_size[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+		Position = {layout_groupbox_position[1]+1.5*btn_size[1], (layout_groupbox_position[2] + (4*btn_size[2]))},
 		Size = {4*btn_size[1], btn_size[2]}
 	}
 
@@ -282,20 +282,20 @@ function GetControlLayout(props)
 			Color = {0, 255, 0},
 			OffColor = {0, 0, 0},
 			UnlinkOffColor = true,
-			Position = {matrix_groupbox_position[1] + (5.5*btn_size[1]) + ((btn_size[1]*1.5)/4), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Position = {layout_groupbox_position[1] + (5.5*btn_size[1]) + ((btn_size[1]*1.5)/4), layout_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
 			Size = {btn_size[2], btn_size[2]}
 		}
 		layout["OverrideName " .. s] = {
 			PrettyName = "Override~Name " .. s,
 			Style = "Text",
-			Position = {matrix_groupbox_position[1] + (btn_size[1]*1.5), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Position = {layout_groupbox_position[1] + (btn_size[1]*1.5), layout_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
 			Size = {4*btn_size[1], btn_size[2]}
 		}
 		layout["OverrideActivate " .. s] = {
 			PrettyName = "Override~Activate " .. s,
 			Style = "Button",
 			ButtonStyle = "Momentary",
-			Position = {matrix_groupbox_position[1] + (btn_size[1]/4), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Position = {layout_groupbox_position[1] + (btn_size[1]/4), layout_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
 			Size = btn_size
 		}
 	end
