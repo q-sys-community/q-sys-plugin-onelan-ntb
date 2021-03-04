@@ -11,11 +11,17 @@ PluginInfo = {
 
 -- Once you've drawn your plugin in Designer, you can determine what colors you use a lot. Save yourself some time by putting them in a table, and then simply calling them later.
 local Colors = {
+	onelan_yellow = {237,208,1},
+	onelan_grey = {69,69,69},
 	White = {255, 255, 255},
 	Black = {0, 0, 0},
 	Red = {255, 0, 0},
 	Green = {0, 255, 0}
 }
+
+function GetColor(props)
+    return Colors.onelan_yellow
+end
 
 local MaxSchedules = 10
 -- We can let users determine some of the plugin properties by exposing them here
@@ -126,7 +132,106 @@ end
 function GetControlLayout(props)
 	local ActiveRemote = props["page_index"].Value
 	local layout = {}
-	local graphics = {}
+	
+	local title_size = {224,32}
+    local btn_size = {32,24}
+    local status_groupbox_size = {title_size[1], 4*btn_size[2]}
+    local matrix_groupbox_position = {0, title_size[2] + status_groupbox_size[2] + (0.5 * btn_size[2])}
+    local matrix_groupbox_size = {title_size[1], (6*btn_size[2]) + (MaxSchedules * btn_size[2])}
+
+	graphics = {
+        {
+            Type = "Header",
+            Text = "OneLAN NTB",
+            HTextAlign = "Center",
+            Color = Colors.onelan_grey,
+            FontSize = 16,
+            Position = {0, 0},
+            Size = title_size
+        },
+        {
+            Type = "GroupBox",
+            Text = "Status",
+            HTextAlign = "Left",
+            Fill = Colors.onelan_yellow,
+            CornerRadius = 8,
+            StrokeColor = Colors.onelan_grey,
+            Color = Colors.onelan_grey,
+            StrokeWidth = 1,
+            Position = {0,title_size[2]},
+            Size = status_groupbox_size
+        },
+        {
+            Type = "Text",
+            Text = "Online:",
+            Font = "Roboto",
+            FontSize = 12,
+            FontStyle = "Bold",
+            HTextAlign = "Right",
+            Color = Colors.onelan_grey,
+            Position = {0, title_size[2]+(0.5*btn_size[2])},
+            Size = {3*btn_size[1], btn_size[2]}
+        },
+        {
+            Type = "Text",
+            Text = "IP Address:",
+            Font = "Roboto",
+            FontSize = 12,
+            FontStyle = "Bold",
+            HTextAlign = "Right",
+            Color = Colors.onelan_grey,
+            Position = {matrix_groupbox_position[1], title_size[2]+(1.5*btn_size[2])},
+            Size = {3*btn_size[1], btn_size[2]}
+        },
+		{
+            Type = "Text",
+            Text = "Firmware:",
+            Font = "Roboto",
+            FontSize = 12,
+            FontStyle = "Bold",
+            HTextAlign = "Right",
+            Color = Colors.onelan_grey,
+            Position = {matrix_groupbox_position[1], title_size[2]+(2.5*btn_size[2])},
+            Size = {3*btn_size[1], btn_size[2]}
+        },
+		{
+            Type = "GroupBox",
+            Text = "Layout",
+            HTextAlign = "Left",
+            Fill = Colors.onelan_yellow,
+            CornerRadius = 8,
+            StrokeColor = Colors.onelan_grey,
+            Color = Colors.onelan_grey,
+            StrokeWidth = 1,
+            Position = matrix_groupbox_position,
+            Size = matrix_groupbox_size
+        },
+		{
+            Type = "Text",
+            Text = "Active Layout",
+            Font = "Roboto",
+            FontSize = 12,
+            FontStyle = "Bold",
+            HTextAlign = "Center",
+            Color = Colors.onelan_grey,
+            Position = {btn_size[1], matrix_groupbox_position[2] + (1*btn_size[2])},
+            Size = {5*btn_size[1], btn_size[2]}
+        },
+		{
+            Type = "Text",
+            Text = "Select",
+            FontSize = 10,
+            Position = {matrix_groupbox_position[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+            Size = {1.5*btn_size[1],btn_size[2]}
+        },
+		{
+            Type = "Text",
+            Text = "Active",
+            FontSize = 10,
+            Position = {matrix_groupbox_position[1]+5.5*btn_size[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+            Size = {1.5*btn_size[1],btn_size[2]}
+        }
+	}
 
 	-- Status
 	layout["Online"] = {
@@ -135,50 +240,38 @@ function GetControlLayout(props)
 		Color = {0, 255, 0},
 		OffColor = {255, 0, 0},
 		UnlinkOffColor = true,
-		Position = {3, 20},
-		Size = {25, 25}
+		Position = {3*btn_size[1], title_size[2]+(0.5*btn_size[2])},
+        Size = {btn_size[2], btn_size[2]}
 	}
 	layout["ConnectionState"] = {
 		--PrettyName = "System~IP Host",
 		Style = "Text",
-		Position = {54, 12},
-		Size = {200, 25}
+		Position = {3*btn_size[1], title_size[2]+(1.5*btn_size[2])},
+        Size = {3*btn_size[1], btn_size[2]}
 	}
 	layout["FirmwareVersion"] = {
 		--PrettyName = "System~Firmware Version",
 		Style = "Text",
-		Position = {275, 12},
-		Size = {125, 25}
+		Position = {3*btn_size[1], title_size[2]+(2.5*btn_size[2])},
+        Size = {3*btn_size[1], btn_size[2]}
 	}
-	table.insert(
-		graphics,
-		{
-			Type = "GroupBox", -- This is the overall groupbox that will give the plugin a more 'contained' look
-			Text = "Status",
-			HTextAlign = "Left",
-			Fill = Colors.White,
-			CornerRadius = 8,
-			StrokeColor = Colors.Black,
-			StrokeWidth = 1,
-			Position = {0, 0},
-			Size = {415, 48} -- The width of the main GroupBox is dependent on how many channels the user specified. More channels means a wider group box
-		}
-	)
 
 	-- Schedule Select
 	layout["ActiveSchedule"] = {
 		PrettyName = "Schedule~Current",
 		Style = "Text",
-		Position = {50, 60},
-		Size = {125, 25}
+		Position = {btn_size[1], matrix_groupbox_position[2] + (2*btn_size[2])},
+            Size = {5*btn_size[1], btn_size[2]}
 	}
 
 	layout["OverrideCancel"] = {
 		PrettyName = "Override~Cancel",
 		Style = "Button",
 		ButtonStyle = "Momentary",
-		Position = {200, 80},
-		Size = {40, 25}
+		Legend = "Cancel Override",
+		Color = {255,0,0},
+		Position = {matrix_groupbox_position[1]+1.5*btn_size[1], (matrix_groupbox_position[2] + (4*btn_size[2]))},
+		Size = {4*btn_size[1], btn_size[2]}
 	}
 
 	for s = 1, MaxSchedules do
@@ -189,21 +282,21 @@ function GetControlLayout(props)
 			Color = {0, 255, 0},
 			OffColor = {0, 0, 0},
 			UnlinkOffColor = true,
-			Position = {15, 80 + (s * 25)},
-			Size = {25, 25}
+			Position = {matrix_groupbox_position[1] + (5.5*btn_size[1]) + ((btn_size[1]*1.5)/4), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Size = {btn_size[2], btn_size[2]}
 		}
 		layout["OverrideName " .. s] = {
 			PrettyName = "Override~Name " .. s,
 			Style = "Text",
-			Position = {65, 80 + (s * 25)},
-			Size = {100, 25}
+			Position = {matrix_groupbox_position[1] + (btn_size[1]*1.5), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Size = {4*btn_size[1], btn_size[2]}
 		}
 		layout["OverrideActivate " .. s] = {
 			PrettyName = "Override~Activate " .. s,
 			Style = "Button",
 			ButtonStyle = "Momentary",
-			Position = {200, 80 + (s * 25)},
-			Size = {40, 25}
+			Position = {matrix_groupbox_position[1] + (btn_size[1]/4), matrix_groupbox_position[2] + (4*btn_size[2]) + (s * btn_size[2])},
+			Size = btn_size
 		}
 	end
 
