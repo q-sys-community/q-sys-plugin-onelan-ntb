@@ -30,9 +30,14 @@ local MaxSchedules = 10
 function GetProperties()
 	props = {
 		{
-			Name = "IP Host",
+			Name = "IP Address",
 			Type = "string",
 			Value = "127.0.0.1"
+		},
+		{
+			Name = "Password",
+			Type = "string",
+			Value = ""
 		}
 	}
 	return props
@@ -244,7 +249,7 @@ function GetControlLayout(props)
         Size = {btn_size[2], btn_size[2]}
 	}
 	layout["ConnectionState"] = {
-		--PrettyName = "System~IP Host",
+		--PrettyName = "System~IP Address",
 		Style = "Text",
 		Position = {3*btn_size[1], title_size[2]+(1.5*btn_size[2])},
         Size = {3*btn_size[1], btn_size[2]}
@@ -543,10 +548,10 @@ if Controls then
 
 	function getSchedules()
 		HttpClient.Download {
-			Url = "http://" .. Properties["IP Host"].Value .. "/status/schedule.xml",
+			Url = "http://" .. Properties["IP Address"].Value .. "/status/schedule.xml",
 			Headers = {["Content-Type"] = "text/xml"},
 			User = "remote",
-			Password = "RedBull1987",
+			Password = Properties["Password"].Value,
 			Timeout = 10,
 			EventHandler = handleGetSchedules
 		}
@@ -566,10 +571,10 @@ if Controls then
 		-- Wrap the URL in the XML
 
 		HttpClient.Upload {
-			Url = "http://" .. Properties["IP Host"].Value .. "/XML",
+			Url = "http://" .. Properties["IP Address"].Value .. "/XML",
 			Headers = {["Content-Type"] = "text/xml"},
 			User = "remote",
-			Password = "RedBull1987",
+			Password = Properties["Password"].Value,
 			Timeout = 10,
 			Method = "POST",
 			Data = data,
