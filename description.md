@@ -1,6 +1,6 @@
 # Onelan NTB Plugin
 
-Plugin for control of a Onelan STB.
+Plugin for control of a Onelan NTB.
 
 ## Features
 
